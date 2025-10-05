@@ -16,10 +16,10 @@
   <h1>作品提出フォーム</h1>
 
   <label>名前（作者名）</label>
-  <input type="text" id="name" placeholder="例：田中花子">
+  <input type="text" id="name" placeholder="例：たなかはなこ">
 
   <label>作品タイトル</label>
-  <input type="text" id="title" placeholder="例：秋の風">
+  <input type="text" id="title" placeholder="例：あきのかぜ">
 
   <label>コメント（任意）</label>
   <textarea id="comment" placeholder="作品への思いや工夫など"></textarea>
@@ -34,7 +34,7 @@
   <div class="instructions">
     <h3>📮 提出方法</h3>
     <p>「JSON形式でダウンロード」ボタンを押して、作品ファイルを保存してください。</p>
-    <p>保存されたファイル名は「作品タイトル_作者名.json」の形式になります（英数字のみ）。</p>
+    <p>保存されたファイル名は「作品タイトル_作者名.json」の形式になります（ローマ字変換済み）。</p>
     <p>保存したファイルを、以下のいずれかの方法で先生に提出してください：</p>
     <ul>
       <li>学校の共有フォルダにアップロード</li>
@@ -67,10 +67,11 @@
 
           const jsonText = JSON.stringify(data, null, 2);
           preview.style.display = "block";
+          const filename = generateSafeFilename(title, name);
           preview.innerHTML = `
             <h3>提出内容プレビュー</h3>
             <pre>${jsonText}</pre>
-            <button onclick='downloadJSON("${generateSafeFilename(title, name)}", ${JSON.stringify(data)})'>JSON形式でダウンロード</button>
+            <button onclick='downloadJSON("${filename}", ${JSON.stringify(data)})'>JSON形式でダウンロード</button>
           `;
         } catch (err) {
           alert("JSONファイルの読み込みに失敗しました");
@@ -79,10 +80,31 @@
       reader.readAsText(fileInput.files[0]);
     }
 
+    function toRomaji(str) {
+      const kanaMap = {
+        あ:"a", い:"i", う:"u", え:"e", お:"o",
+        か:"ka", き:"ki", く:"ku", け:"ke", こ:"ko",
+        さ:"sa", し:"shi", す:"su", せ:"se", そ:"so",
+        た:"ta", ち:"chi", つ:"tsu", て:"te", と:"to",
+        な:"na", に:"ni", ぬ:"nu", ね:"ne", の:"no",
+        は:"ha", ひ:"hi", ふ:"fu", へ:"he", ほ:"ho",
+        ま:"ma", み:"mi", む:"mu", め:"me", も:"mo",
+        や:"ya", ゆ:"yu", よ:"yo",
+        ら:"ra", り:"ri", る:"ru", れ:"re", ろ:"ro",
+        わ:"wa", を:"wo", ん:"n",
+        が:"ga", ぎ:"gi", ぐ:"gu", げ:"ge", ご:"go",
+        ざ:"za", じ:"ji", ず:"zu", ぜ:"ze", ぞ:"zo",
+        だ:"da", ぢ:"ji", づ:"zu", で:"de", ど:"do",
+        ば:"ba", び:"bi", ぶ:"bu", べ:"be", ぼ:"bo",
+        ぱ:"pa", ぴ:"pi", ぷ:"pu", ぺ:"pe", ぽ:"po"
+      };
+      return str.split("").map(c => kanaMap[c] || "_").join("");
+    }
+
     function generateSafeFilename(title, name) {
-      const safeTitle = title.replace(/[^\w\-]/g, "_");
-      const safeName = name.replace(/[^\w\-]/g, "_");
-      return `${safeTitle}_${safeName}`;
+      const romajiTitle = toRomaji(title);
+      const romajiName = toRomaji(name);
+      return `${romajiTitle}_${romajiName}`;
     }
 
     function downloadJSON(filename, data) {
