@@ -34,6 +34,7 @@
   <div class="instructions">
     <h3>📮 提出方法</h3>
     <p>「JSON形式でダウンロード」ボタンを押して、作品ファイルを保存してください。</p>
+    <p>保存されたファイル名は「作品タイトル_作者名.json」の形式になります（英数字のみ）。</p>
     <p>保存したファイルを、以下のいずれかの方法で先生に提出してください：</p>
     <ul>
       <li>学校の共有フォルダにアップロード</li>
@@ -69,7 +70,7 @@
           preview.innerHTML = `
             <h3>提出内容プレビュー</h3>
             <pre>${jsonText}</pre>
-            <button onclick='downloadJSON("${sanitize(title)}", ${JSON.stringify(data)})'>JSON形式でダウンロード</button>
+            <button onclick='downloadJSON("${generateSafeFilename(title, name)}", ${JSON.stringify(data)})'>JSON形式でダウンロード</button>
           `;
         } catch (err) {
           alert("JSONファイルの読み込みに失敗しました");
@@ -78,18 +79,20 @@
       reader.readAsText(fileInput.files[0]);
     }
 
-    function sanitize(str) {
-      return str.replace(/[^\w\-]/g, "_");
+    function generateSafeFilename(title, name) {
+      const safeTitle = title.replace(/[^\w\-]/g, "_");
+      const safeName = name.replace(/[^\w\-]/g, "_");
+      return `${safeTitle}_${safeName}`;
     }
 
-    function downloadJSON(title, data) {
+    function downloadJSON(filename, data) {
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${title}.json`;
+      a.download = `${filename}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -98,3 +101,4 @@
   </script>
 </body>
 </html>
+
