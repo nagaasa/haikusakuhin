@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>生徒作品ギャラリー</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.min.js"></script>
   <style>
     body { font-family: "Yu Gothic", sans-serif; margin: 20px; }
     h1 { text-align: center; margin-bottom: 30px; }
     .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
-    .gallery-item { border: 1px solid #ccc; padding: 10px; width: 220px; box-shadow: 2px 2px 5px #ccc; }
+    .gallery-item { border: 1px solid #ccc; padding: 10px; width: 260px; box-shadow: 2px 2px 5px #ccc; }
     .caption { text-align: center; margin-top: 10px; font-weight: bold; }
     .comment { font-size: 0.9em; margin-top: 5px; color: #555; }
+    button { margin-top: 10px; padding: 6px 10px; font-size: 0.9em; }
+    textarea { width: 100%; margin-top: 10px; padding: 6px; font-size: 0.9em; }
   </style>
 </head>
 <body>
@@ -47,14 +50,46 @@
       comment.className = "comment";
       comment.textContent = data.comment || "";
 
+      // 再生ボタン
+      const playButton = document.createElement("button");
+      playButton.textContent = "🎵 再生";
+      playButton.onclick = () => playNotes(data.notes || []);
+
+      // いいねボタン
+      const likeButton = document.createElement("button");
+      likeButton.textContent = "❤️ いいね";
+      likeButton.onclick = () => alert("いいねしました！");
+
+      // コメント欄（保存はされません）
+      const commentBox = document.createElement("textarea");
+      commentBox.placeholder = "コメントを書く（保存はされません）";
+
       item.appendChild(title);
       item.appendChild(name);
       item.appendChild(comment);
+      item.appendChild(playButton);
+      item.appendChild(likeButton);
+      item.appendChild(commentBox);
 
       document.getElementById("gallery").appendChild(item);
+    }
+
+    function playNotes(notes) {
+      if (!Array.isArray(notes) || notes.length === 0) {
+        alert("再生できる音がありません");
+        return;
+      }
+
+      const synth = new Tone.Synth().toDestination();
+      let now = Tone.now();
+
+      notes.forEach((note, i) => {
+        synth.triggerAttackRelease(note.pitch || "C4", note.duration || "8n", now + i * 0.5);
+      });
     }
 
     loadGallery();
   </script>
 </body>
 </html>
+
