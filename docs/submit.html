@@ -9,6 +9,7 @@
     label { display: block; margin-top: 10px; }
     input, textarea, button { width: 100%; padding: 8px; margin-top: 5px; }
     .preview { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
+    .instructions { background: #f9f9f9; padding: 10px; border-left: 4px solid #4CAF50; margin-top: 30px; }
   </style>
 </head>
 <body>
@@ -29,6 +30,18 @@
   <button onclick="submitWork()">作品を確認する</button>
 
   <div class="preview" id="preview" style="display:none;"></div>
+
+  <div class="instructions">
+    <h3>📮 提出方法</h3>
+    <p>「JSON形式でダウンロード」ボタンを押して、作品ファイルを保存してください。</p>
+    <p>保存したファイルを、以下のいずれかの方法で先生に提出してください：</p>
+    <ul>
+      <li>学校の共有フォルダにアップロード</li>
+      <li>メールで送信（件名に名前と作品タイトルを記入）</li>
+      <li>Googleフォームがある場合は、ファイル添付して提出</li>
+    </ul>
+    <p>提出された作品は、ギャラリーに掲載されます✨</p>
+  </div>
 
   <script>
     function submitWork() {
