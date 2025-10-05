@@ -2,86 +2,59 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>作品ギャラリー</title>
+  <title>生徒作品ギャラリー</title>
   <style>
     body { font-family: "Yu Gothic", sans-serif; margin: 20px; }
-    h1 { font-size: 1.5em; margin-bottom: 20px; }
-    .work { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; }
-    .work-title { font-weight: bold; font-size: 1.2em; }
-    .work-author { font-style: italic; color: #555; }
-    .work p { margin: 5px 0; }
-    input[type="text"] { width: 100%; margin-top: 5px; padding: 5px; }
-    button { margin-top: 5px; padding: 5px 10px; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    .gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+    .gallery-item { border: 1px solid #ccc; padding: 10px; width: 220px; box-shadow: 2px 2px 5px #ccc; }
+    .caption { text-align: center; margin-top: 10px; font-weight: bold; }
+    .comment { font-size: 0.9em; margin-top: 5px; color: #555; }
   </style>
 </head>
 <body>
   <h1>生徒作品ギャラリー</h1>
-  <div id="gallery"></div>
+  <div class="gallery" id="gallery"></div>
 
   <script>
-    const works = [
-      "works/student01.json",
-      "works/＿.json",
-      "works/student03.json"
-    ];
-
-    const gallery = document.getElementById("gallery");
-    let likes = JSON.parse(localStorage.getItem("likes") || "{}");
-    let comments = JSON.parse(localStorage.getItem("comments") || "{}");
-
     async function loadGallery() {
-      for (const file of works) {
-        try {
-          const response = await fetch(file);
-          const data = await response.json();
-          const div = document.createElement("div");
-          div.className = "work";
+      try {
+        const indexRes = await fetch("works/index.json");
+        const fileList = await indexRes.json();
 
-          const likeCount = likes[file] || 0;
-          const commentList = comments[file] || [];
-
-          div.innerHTML = `
-            <div class="work-title">${data.title || "作品タイトルなし"}</div>
-            <div class="work-author">作者：${data.name || "匿名"}</div>
-            <button onclick="loadWork('${file}')">🎵 再生する</button>
-            <button onclick="likeWork('${file}')">❤️ いいね (${likeCount})</button>
-            <div id="comments-${file}">
-              ${commentList.map(c => `<p>💬 ${c}</p>`).join("")}
-            </div>
-            <input type="text" id="commentInput-${file}" placeholder="コメントを書く">
-            <button onclick="addComment('${file}')">💬 コメント送信</button>
-          `;
-          gallery.appendChild(div);
-        } catch (err) {
-          console.error("読み込み失敗:", file);
+        for (const filename of fileList) {
+          const res = await fetch(`works/${filename}`);
+          const data = await res.json();
+          displayWork(data);
         }
+      } catch (error) {
+        console.error("作品の読み込みに失敗しました:", error);
       }
     }
 
-    function loadWork(file) {
-      localStorage.setItem("loadedWork", file);
-      window.location.href = "index.html";
-    }
+    function displayWork(data) {
+      const item = document.createElement("div");
+      item.className = "gallery-item";
 
-    function likeWork(file) {
-      likes[file] = (likes[file] || 0) + 1;
-      localStorage.setItem("likes", JSON.stringify(likes));
-      location.reload();
-    }
+      const title = document.createElement("div");
+      title.className = "caption";
+      title.textContent = data.title || "タイトルなし";
 
-    function addComment(file) {
-      const input = document.getElementById(`commentInput-${file}`);
-      const text = input.value.trim();
-      if (!text) return;
+      const name = document.createElement("div");
+      name.textContent = `作者：${data.name || "不明"}`;
 
-      comments[file] = (comments[file] || []).concat(text);
-      localStorage.setItem("comments", JSON.stringify(comments));
-      input.value = "";
-      location.reload();
+      const comment = document.createElement("div");
+      comment.className = "comment";
+      comment.textContent = data.comment || "";
+
+      item.appendChild(title);
+      item.appendChild(name);
+      item.appendChild(comment);
+
+      document.getElementById("gallery").appendChild(item);
     }
 
     loadGallery();
   </script>
 </body>
 </html>
-
