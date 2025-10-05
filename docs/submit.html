@@ -2,64 +2,74 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>作品投稿フォーム</title>
+  <title>作品提出フォーム</title>
   <style>
     body { font-family: "Yu Gothic", sans-serif; margin: 20px; }
-    h1 { font-size: 1.5em; margin-bottom: 10px; }
+    h1 { font-size: 1.5em; margin-bottom: 20px; }
     label { display: block; margin-top: 10px; }
-    textarea, input { width: 100%; padding: 5px; margin-top: 5px; }
-    button { margin-top: 15px; padding: 8px 16px; }
+    input, textarea, button { width: 100%; padding: 8px; margin-top: 5px; }
+    .preview { margin-top: 20px; border: 1px solid #ccc; padding: 10px; }
   </style>
 </head>
 <body>
-  <h1>作品投稿フォーム</h1>
+  <h1>作品提出フォーム</h1>
+
   <label>名前（作者名）</label>
-  <input type="text" id="name" placeholder="例：山田花子">
+  <input type="text" id="name" placeholder="例：田中花子">
 
   <label>作品タイトル</label>
-  <input type="text" id="title" placeholder="例：秋の静けさ">
+  <input type="text" id="title" placeholder="例：秋の風">
 
-  <label>俳句（ひらがなで入力）</label>
-  <textarea id="haiku" placeholder="例：あきのしずけさゆうぐれのかぜすずし"></textarea>
+  <label>コメント（任意）</label>
+  <textarea id="comment" placeholder="作品への思いや工夫など"></textarea>
 
-  <button onclick="generateJSON()">作品を保存（JSONダウンロード）</button>
+  <label>作品ファイル（JSON）</label>
+  <input type="file" id="fileInput" accept=".json">
+
+  <button onclick="submitWork()">作品を確認する</button>
+
+  <div class="preview" id="preview" style="display:none;"></div>
 
   <script>
-    function generateJSON() {
+    function submitWork() {
       const name = document.getElementById("name").value.trim();
       const title = document.getElementById("title").value.trim();
-      const haikuText = document.getElementById("haiku").value.replace(/\s/g, "").trim();
+      const comment = document.getElementById("comment").value.trim();
+      const fileInput = document.getElementById("fileInput");
+      const preview = document.getElementById("preview");
 
-      if (!name || !title || haikuText.length < 17) {
-        alert("すべての項目を正しく入力してください（俳句は5-7-5の17文字）");
+      if (!name || !title || fileInput.files.length === 0) {
+        alert("名前・タイトル・作品ファイルは必須です");
         return;
       }
 
-      const counts = [5, 7, 5];
-      let haikuArray = [];
-      let index = 0;
-      for (let block = 0; block < counts.length; block++) {
-        for (let i = 0; i < counts[block]; i++) {
-          haikuArray.push(haikuText[index++] || "");
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const data = JSON.parse(event.target.result);
+          data.name = name;
+          data.title = title;
+          data.comment = comment;
+
+          const jsonText = JSON.stringify(data, null, 2);
+          preview.style.display = "block";
+          preview.innerHTML = `
+            <h3>提出内容プレビュー</h3>
+            <pre>${jsonText}</pre>
+            <button onclick="downloadJSON('${title}', ${JSON.stringify(data)})">JSON形式でダウンロード</button>
+          `;
+        } catch (err) {
+          alert("JSONファイルの読み込みに失敗しました");
         }
-        if (block < counts.length - 1) haikuArray.push(""); // 休符
-      }
-
-      const grid = Array(6).fill().map(() => Array(haikuArray.length).fill(0));
-
-      const data = {
-        name,
-        title,
-        haikuArray,
-        grid,
-        tempo: "120",
-        volume: 1
       };
+      reader.readAsText(fileInput.files[0]);
+    }
 
+    function downloadJSON(title, data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${name}_${title}.json`;
+      a.download = `${title}.json`;
       a.click();
     }
   </script>
