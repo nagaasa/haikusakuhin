@@ -186,7 +186,6 @@
       reader.readAsText(file);
     });
 
-    // ギャラリーからの作品読み込み
     window.addEventListener("load", async () => {
       const file = localStorage.getItem("loadedWork");
       if (file) {
@@ -194,4 +193,5 @@
         try {
           const response = await fetch(file);
           const data = await response.json();
-          createGrid(data
+          createGrid(data.grid[0].length);
+          for (let r
