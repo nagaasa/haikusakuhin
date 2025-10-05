@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>作品投稿フォーム</title>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; margin: 20px; }
+    h1 { font-size: 1.5em; margin-bottom: 10px; }
+    label { display: block; margin-top: 10px; }
+    textarea, input { width: 100%; padding: 5px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>作品投稿フォーム</h1>
+  <label>名前（作者名）</label>
+  <input type="text" id="name" placeholder="例：山田花子">
+
+  <label>作品タイトル</label>
+  <input type="text" id="title" placeholder="例：秋の静けさ">
+
+  <label>俳句（ひらがなで入力）</label>
+  <textarea id="haiku" placeholder="例：あきのしずけさゆうぐれのかぜすずし"></textarea>
+
+  <button onclick="generateJSON()">作品を保存（JSONダウンロード）</button>
+
+  <script>
+    function generateJSON() {
+      const name = document.getElementById("name").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const haikuText = document.getElementById("haiku").value.replace(/\s/g, "").trim();
+
+      if (!name || !title || haikuText.length < 17) {
+        alert("すべての項目を正しく入力してください（俳句は5-7-5の17文字）");
+        return;
+      }
+
+      const counts = [5, 7, 5];
+      let haikuArray = [];
+      let index = 0;
+      for (let block = 0; block < counts.length; block++) {
+        for (let i = 0; i < counts[block]; i++) {
+          haikuArray.push(haikuText[index++] || "");
+        }
+        if (block < counts.length - 1) haikuArray.push(""); // 休符
+      }
+
+      const grid = Array(6).fill().map(() => Array(haikuArray.length).fill(0));
+
+      const data = {
+        name,
+        title,
+        haikuArray,
+        grid,
+        tempo: "120",
+        volume: 1
+      };
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name}_${title}.json`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
 
