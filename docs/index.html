@@ -197,11 +197,4 @@
       if (encoded) {
         try {
           const workData = JSON.parse(decodeURIComponent(encoded));
-          loadWorkData(workData);
-        } catch (err) {
-          console.error("作品データの読み込み失敗:", err);
-        }
-      }
-    });
-</script>
 
