@@ -1,1 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>俳句メロディーメーカー</title>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
+  <style>
+    body { font-family: "Yu Gothic", sans-serif; margin: 20px; }
+    h1 { font-size: 1.5em; margin-bottom: 10px; }
+    textarea { width: 100%; height: 50px; margin-bottom: 10px; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    td, th { border: 1px solid #ccc; width: 30px; height: 30px; text-align: center; }
+    th { background: #f0f0f0; }
+    button { margin: 5px; padding: 5px 10px; }
+    .slider-container { margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>俳句メロディーメーカー</h1>
+  <textarea id="haiku" placeholder="ひらがなで俳句を入力してください"></textarea>
+  <br>
+  <button onclick="placeHaiku()">俳句をマス目に配置</button>
+  <button onclick="playMelody()">再生</button>
+  <button onclick="stopMelody()">停止</button>
+  <button onclick="saveJSON()">作品を保存（JSONダウンロード）</button>
+  <input type="file" id="fileInput">
+  <button onclick="resetGrid()">リセット</button>
 
+  <div class="slider-container">
+    テンポ <span id="tempoValue">120</span> BPM
+    <input type="range" id="tempo" min="60" max="240" value="120" 
+      oninput="document.getElementById('tempoValue').textContent=this.value">
+  </div>
+  <div class="slider-container">
+    音量 <span id="volumeValue">100</span> %
+    <input type="range" id="volume" min="0" max="100" value="100" 
+      oninput="document.getElementById('volumeValue').textContent=this.value">
+  </div>
+
+  <table id="grid"></table>
+
+  <script>
+    const pitches = ["高レ", "ド", "ラ", "ソ", "ファ", "低レ"];
+    const grid = document.getElementById("grid");
+    const synth = new Tone.PolySynth().toDestination();
+
+    function createGrid(columns = 15) {
+      grid.innerHTML = "";
+      let header = grid.insertRow();
+      header.insertCell();
+      for (let i = 0; i < columns; i++) {
+        let cell = header.insertCell();
+        cell.textContent = "";
+      }
+      for (let pIndex = 0; pIndex < pitches.length; pIndex++) {
+        let row = grid.insertRow();
+        let th = row.insertCell();
+        th.textContent = pitches[pIndex];
+        for (let i = 0; i < columns; i++) {
+          let cell = row.insertCell();
+          cell.addEventListener("click", () => {
+            cell.textContent = cell.textContent ? "" : "○";
+            if (cell.textContent === "○") playNote(pitches[pIndex], 0.3);
+          });
+        }
+      }
+    }
+
+    createGrid();
+
+    function resetGrid() {
+      for (let r = 1; r < grid.rows.length; r++) {
+        for (let c = 1; c < grid.rows[r].cells.length; c++) {
+          grid.rows[r].cells[c].textContent = "";
+        }
+      }
+    }
+
+    function playNote(pitch, duration) {
+      const noteMap = {
+        "低レ": "D3",
+        "ファ": "F3",
+        "ソ": "G3",
+        "ラ": "A3",
+        "ド": "C4",
+        "高レ": "D4"
+      };
+      const note = noteMap[pitch];
+      const volume = document.getElementById("volume").value / 100;
+      synth.volume.value = Tone.gainToDb(volume);
+      synth.triggerAttackRelease(note, duration);
+    }
+
+    function placeHaiku() {
+      let text = document.getElementById("haiku").value.replace(/\s/g, "");
+      let counts = [5, 7, 5];
+      let chars = [];
+      let index = 0;
+      for (let block = 0; block < counts.length; block++) {
+        for (let i = 0; i < counts[block] && index < text.length; i++) {
+          chars.push(text[index++]);
+        }
+        if (block < counts.length - 1) chars.push(""); // 休符
+      }
+      createGrid(chars.length);
+      for (let i = 0; i < chars.length; i++) {
+        grid.rows[0].cells[i + 1].textContent = chars[i];
+      }
+    }
+
+    let isPlaying = false;
+
+    async function playMelody() {
+      await Tone.start();
+      if (isPlaying) return;
+      isPlaying = true;
+      const tempo = document.getElementById("tempo").value;
+      const beatDuration = 60 / tempo;
+      for (let c = 1; c < grid.rows[0].cells.length; c++) {
+        if (!isPlaying) break;
+        for (let r = 1; r < grid.rows.length; r++) {
+          if (grid.rows[r].cells[c].textContent === "○") {
+            playNote(pitches[r - 1], beatDuration);
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, beatDuration * 1000));
+      }
+      isPlaying = false;
+    }
+
+    function stopMelody() { isPlaying = false; }
+
+    function saveJSON() {
+      let data = {
+        grid: [],
+        haikuArray: [],
+        tempo: document.getElementById("tempo").value,
+        volume: document.getElementById("volume").value / 100
+      };
+      for (let c = 1; c < grid.rows[0].cells.length; c++) {
+        data.haikuArray.push(grid.rows[0].cells[c].textContent);
+      }
+      for (let r = 1; r < grid.rows.length; r++) {
+        let rowData = [];
+        for (let c = 1; c < grid.rows[r].cells.length; c++) {
+          rowData.push(grid.rows[r].cells[c].textContent === "○" ? 1 : 0);
+        }
+        data.grid.push(rowData);
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "haiku_melody.json";
+      a.click();
+    }
+
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const data = JSON.parse(event.target.result);
+        if (data.grid) {
+          createGrid(data.grid[0].length);
+          for (let r = 0; r < data.grid.length; r++) {
+            for (let c = 0; c < data.grid[r].length; c++) {
+              grid.rows[r + 1].cells[c + 1].textContent = data.grid[r][c] ? "○" : "";
+            }
+          }
+        }
+        if (data.haikuArray) {
+          for (let i = 0; i < data.haikuArray.length; i++) {
+            grid.rows[0].cells[i + 1].textContent = data.haikuArray[i];
+          }
+          document.getElementById("haiku").value = data.haikuArray.map(c => c || " ").join("");
+        }
+        if (data.tempo) {
+          document.getElementById("tempo").value = data.tempo;
+          document.getElementById("tempoValue").textContent = data.tempo;
+        }
+        if (data.volume !== undefined) {
+          document.getElementById("volume").value = data.volume * 100;
+          document.getElementById("volumeValue").textContent = data.volume * 100;
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
