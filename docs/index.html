@@ -188,13 +188,20 @@
       }
       if (data.volume !== undefined) {
         document.getElementById("volume").value = data.volume * 100;
-        document.getElementById("volumeValue").textContent = data.volume * 100;
-      }
-    }
+        document.getElementById("volumeValue").textContent = data.volume *
+    } // ← loadWorkData の閉じ括弧
 
     window.addEventListener("load", () => {
       const encoded = getQueryParam("data");
       if (encoded) {
         try {
           const workData = JSON.parse(decodeURIComponent(encoded));
-
+          loadWorkData(workData);
+        } catch (err) {
+          console.error("作品データの読み込み失敗:", err);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
