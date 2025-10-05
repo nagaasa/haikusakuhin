@@ -193,4 +193,5 @@
         localStorage.removeItem("loadedWork");
         try {
           const response = await fetch(file);
-          const data = await response.json
+          const data = await response.json();
+          createGrid(data
