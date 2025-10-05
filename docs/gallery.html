@@ -9,7 +9,9 @@
     .work { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; }
     .work-title { font-weight: bold; font-size: 1.2em; }
     .work-author { font-style: italic; color: #555; }
-    button { margin-top: 10px; }
+    .work p { margin: 5px 0; }
+    input[type="text"] { width: 100%; margin-top: 5px; padding: 5px; }
+    button { margin-top: 5px; padding: 5px 10px; }
   </style>
 </head>
 <body>
@@ -24,6 +26,8 @@
     ];
 
     const gallery = document.getElementById("gallery");
+    let likes = JSON.parse(localStorage.getItem("likes") || "{}");
+    let comments = JSON.parse(localStorage.getItem("comments") || "{}");
 
     async function loadGallery() {
       for (const file of works) {
@@ -32,10 +36,20 @@
           const data = await response.json();
           const div = document.createElement("div");
           div.className = "work";
+
+          const likeCount = likes[file] || 0;
+          const commentList = comments[file] || [];
+
           div.innerHTML = `
             <div class="work-title">${data.title || "作品タイトルなし"}</div>
             <div class="work-author">作者：${data.name || "匿名"}</div>
             <button onclick="loadWork('${file}')">🎵 再生する</button>
+            <button onclick="likeWork('${file}')">❤️ いいね (${likeCount})</button>
+            <div id="comments-${file}">
+              ${commentList.map(c => `<p>💬 ${c}</p>`).join("")}
+            </div>
+            <input type="text" id="commentInput-${file}" placeholder="コメントを書く">
+            <button onclick="addComment('${file}')">💬 コメント送信</button>
           `;
           gallery.appendChild(div);
         } catch (err) {
@@ -46,7 +60,24 @@
 
     function loadWork(file) {
       localStorage.setItem("loadedWork", file);
-      window.location.href = "index.html"; // メロディーメーカーへ移動
+      window.location.href = "index.html";
+    }
+
+    function likeWork(file) {
+      likes[file] = (likes[file] || 0) + 1;
+      localStorage.setItem("likes", JSON.stringify(likes));
+      location.reload();
+    }
+
+    function addComment(file) {
+      const input = document.getElementById(`commentInput-${file}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      comments[file] = (comments[file] || []).concat(text);
+      localStorage.setItem("comments", JSON.stringify(comments));
+      input.value = "";
+      location.reload();
     }
 
     loadGallery();
